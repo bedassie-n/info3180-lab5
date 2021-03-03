@@ -27,6 +27,11 @@ def about():
     """Render the website's about page."""
     return render_template('about.html')
 
+@app.route('/secure-page')
+@login_required
+def secure_page():
+    """Render a secure page on our website that only logged in users can access."""
+    return render_template('secure_page.html')
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -54,13 +59,20 @@ def login():
                 login_user(user, remember=True)
                 flash('Logged in successfully.', 'success')
                 # remember to flash a message to the user
-                return redirect(url_for("secure-page"))  # they should be redirected to a secure-page route instead
+                return redirect(url_for("secure_page"))  # they should be redirected to a secure-page route instead
             else:
                 flash('Username or Password is incorrect.', 'danger')
 
     flash_errors(form)
     return render_template("login.html", form=form)
 
+@app.route("/logout")
+@login_required
+def logout():
+    # Logout the user and end the session
+    logout_user()
+    flash('You have been logged out.', 'success')
+    return redirect(url_for('home'))
 
 # user_loader callback. This callback is used to reload the user object from
 # the user ID stored in the session
@@ -72,6 +84,13 @@ def load_user(id):
 # The functions below should be applicable to all Flask apps.
 ###
 
+def flash_errors(form):
+    for field, errors in form.errors.items():
+        for error in errors:
+            flash(u"Error in the %s field - %s" % (
+                getattr(form, field).label.text,
+                error
+            ), 'danger')
 
 @app.route('/<file_name>.txt')
 def send_text_file(file_name):
